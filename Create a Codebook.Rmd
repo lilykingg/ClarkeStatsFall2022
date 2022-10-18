@@ -1,0 +1,64 @@
+This project follows the guide to codebook creation by Adrian Gadient-Brügger at <https://www.adrianbruegger.com/post/simple-codebook/>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+install.packages('tidyverse')
+install.packages('sjlabelled')
+install.packages('psych')
+library(tidyverse)
+library(sjlabelled)
+library(psych)
+```
+
+Load some example data:
+
+```{r}
+library(haven) # package to read files from popular statistical software packages such as SPSS, SAS, Stata
+data <- read_sav("https://mmi.psycho.unibas.ch/r-toolbox/data/Cars.sav") # import data
+```
+
+The following commands work with labeled data, but the sjlabelled package has documentation [here](https://cran.r-project.org/web/packages/sjlabelled/index.html) that includes examples of how to add labels.
+
+```{r}
+get_label(data) # show content of variables (what the variable measures)
+
+# which returns for example:
+# MPG               
+# "Miles per Gallon"
+
+get_labels(data) # show value labels (what the different answer options mean)
+# note: the value labels are not used for this very simple codebook.
+
+# which returns for example:
+# $CYLINDER
+# [1] "3 Cylinders" "4 Cylinders" "5 Cylinders" "6 Cylinders" "8 Cylinders"
+```
+
+Suppose that you want to extract the labels from a data set: the following code does so using the tibble library, included in tidyverse.
+
+```{r}
+# extract labels from dataframe and store as new object
+simple_codebook <- enframe(get_label(data))
+
+# use more informative column names
+colnames(simple_codebook) <- c("variable_id", "item_text")
+
+# Show the new data frame
+simple_codebook
+```
+
+To include basic summary statistics of the data set along with the variables and labels, one can do this using the psych library:
+
+```{r}
+# get descriptive statistics and select those of interest
+descriptives <- data %>% describe() %>% as_tibble() %>% select("n","min","max","mean")
+# add stats to codebook 
+simple_codebook <- cbind(simple_codebook,descriptives)
+```
+
+The following code will save the codebook in .csv format:
+
+```{r}
+# write to csv
+write.csv(simple_codebook,file="simple_codebook.csv", na="", row.names=FALSE) 
+```
